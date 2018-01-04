@@ -1,0 +1,78 @@
+Logic Blocks:
+
+Fetch Stage:
+1. LD_PC/LD_DE Block  	
+
+inputs: mem_stall, dep_stall
+
+output: if memory is stalled then we can't propogate data forward in the pipeline stages so
+	LD_PC = 0 and LD_DE = 0 (don't alter the DE latches) 
+
+	if there is a data dependency, then the data in the DE latches can't
+	propogate to the AGEX stage so LD_PC = 0 and LD_DE = 0 (don't alter the DE latches) 
+
+2. DE_V Block
+
+inputs: ready bit from i_cache, v_de_br_stall, v_agex_br_stall, v_mem_br_stall
+
+output: if ready bit from i_cache = 0, set valid bit of DE latches to false (if LD_DE enabled)
+	if any of stall signals = 1, LD_DE = 0 (inserting bubble to wait until branch resolved) (if LD_DE enabled)
+
+
+Decode Stage: 
+1. Dependency Logic Check
+
+inputs: the ones depicted in the diagram (I also added the valid bit signals for the AGEX, MEM, and SR stages
+	although they might not be needed)
+
+output: if sr1 needed && sr1.id equals the destination register id from the AGEX, MEM, or SR stages (and the
+	corresponding stage is valid) then dep_stall = 1 (insert bubble at front of pipeline).
+	repeat for sr2
+	
+	if conditional branch instruction and LD_CC is enabled in the AGEX, MEM, or SR stages (and the
+	corresponding stage is valid) then dep_stall = 1 (insert bubble at front of pipeline).
+
+
+2. AGEX_V/LD_AGEX Block
+
+inputs: mem_stall, DE_V
+
+outputs: if DE latches invalid, AGEX_V = 0 (Agex latches should be invalid if loaded) 
+
+	 if memory is stalled, LD_AGEX = 0 (don't load AGEX latches since AGEX latches weren't able to propogate
+	 to memory latches)
+	 
+	 else, LD_AGEX = 1.
+
+
+
+AGEX Stage:
+1. MEM_V/LD_MEM Block
+
+inputs: mem_stall, AGEX_V 
+	
+outputs: if AGEX latches invalid, MEM_V = 0 (memory latches should be invalid if loaded)
+
+	 if memory, stalled, LD_MEM = 0 (don't load memory latches since memory latches weren't able to
+	 propogate to SR latches)
+
+	 else,
+  	 LD_MEM = 1.
+
+
+Memory Stage:
+1. BR Logic
+
+inputs: the ones depicted
+
+output: if(conditional or unconditional branch) -> MEM.PCMUX = "A" (corresponding to Target PC)
+	if(Trap operation) 			-> MEM.PCMUX = "B" (corresponding to TRAP PC)
+	else					-> MEM.PCMUX = "C" (Corresponding to PC + 2)
+
+
+2. SR_V Block
+
+inputs: MEM_V
+
+outputs: if MEM_V = 1, SR_V = 1
+	 else, SR_V = 0

@@ -1,0 +1,18 @@
+Differences: 5 instructions (STB, JSR/R, LDW, STW, TRAP) 
+
+STB: 	1. Why would SR2.NEEDED be set? (Only reading from 1 register operand)
+	2. ALUK and ALU.RESULTMUX shouldn't be set? (ALU doesn't do address calculation)
+
+
+JSR/R: 	1. Shouldn't load register be set (for both JSR and JSRR) (writing to R7)
+
+
+LDW:	1. LSHF (You're right, thanks)
+
+
+STW:	1. Why would SR2.NEEDED be set? (Only reading from 1 register operand)
+	2. LSHF (You're right, thanks)
+	3. ALUK and ALU.RESULTMUX shouldn't be set? (ALU doesn't do address calculation)
+
+
+Trap: 	1. Shouldn't load register be set? (writing to R7)
